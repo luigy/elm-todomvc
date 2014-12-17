@@ -12,7 +12,11 @@
 </body>
 
 <script type="text/javascript">
+var TODO_STATE_KEY = 'elm-todo-state'
+var storedState = localStorage.getItem(TODO_STATE_KEY)
+var startingState = storedState ? JSON.parse(storedState) : null
 var todomvc = Elm.fullscreen(Elm.Todo, {
+  getStorage: startingState,
   router: capitalize(getHash() || 'all')
 });
 todomvc.ports.focus.subscribe(function(id) {
@@ -26,6 +30,9 @@ todomvc.ports.focus.subscribe(function(id) {
         }
     }, 50);
 });
+todomvc.ports.setStorage.subscribe(function(state) {
+  localStorage.setItem(TODO_STATE_KEY, JSON.stringify(state))
+})
 window.addEventListener('popstate', onPopState, false)
 
 function onPopState() {

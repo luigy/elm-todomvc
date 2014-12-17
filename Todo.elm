@@ -231,7 +231,10 @@ scene model v (w,h) =
 
 -- manage the model of our application over time
 model : Signal Model
-model = Signal.foldp update empty (Signal.subscribe actions)
+model = Signal.foldp update startingState (Signal.subscribe actions)
+
+startingState : Model
+startingState = Maybe.withDefault empty getStorage
 
 -- actions from user input
 actions : Signal.Channel Action
@@ -250,3 +253,9 @@ port focus =
               _ -> Nothing
     in
         Signal.map toSelector (Signal.subscribe actions)
+
+-- localStorage
+port getStorage : Maybe Model
+
+port setStorage : Signal Model
+port setStorage = model
