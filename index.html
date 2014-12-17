@@ -12,7 +12,9 @@
 </body>
 
 <script type="text/javascript">
-var todomvc = Elm.fullscreen(Elm.Todo);
+var todomvc = Elm.fullscreen(Elm.Todo, {
+  router: capitalize(getHash() || 'all')
+});
 todomvc.ports.focus.subscribe(function(id) {
     setTimeout(function() {
         if (id === null) {
@@ -24,6 +26,19 @@ todomvc.ports.focus.subscribe(function(id) {
         }
     }, 50);
 });
+window.addEventListener('popstate', onPopState, false)
+
+function onPopState() {
+  var hash = capitalize(getHash() || 'all')
+  todomvc.ports.router.send(hash)
+}
+function getHash() {
+  var hash = location.href.split('#')[1] || ''
+  return hash.replace('/', '')
+}
+function capitalize(str) {
+  return str[0].toUpperCase() + str.substr(1)
+}
 </script>
 
 </html>

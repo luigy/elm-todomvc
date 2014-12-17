@@ -6,6 +6,7 @@ import Html.Events (..)
 import Json.Decode as Json
 import LocalChannel as LC
 import Maybe
+import List
 import Signal
 import String
 
@@ -39,7 +40,6 @@ type Action
     | Completed Bool
     | Delete
 
-
 update : Action -> Model -> Maybe Model
 update update task =
     case update of
@@ -55,7 +55,7 @@ update update task =
       Commit ->
           case task.edits of
             Nothing ->
-                Nothing
+                Just task
 
             Just rawDescription ->
                 let description = String.trim rawDescription in
@@ -63,7 +63,7 @@ update update task =
                     Just
                       { task |
                           edits <- Nothing,
-                          description <- String.trim description
+                          description <- description
                       }
 
       Completed bool ->
@@ -113,18 +113,23 @@ view channel task =
           , name "title"
           , id ("todo-" ++ toString task.id)
           , on "input" targetValue (\desc -> LC.send channel (task.id, Edit desc))
-          , onBlur (LC.send channel (task.id, Cancel))
-          , onEnter (LC.send channel (task.id, Commit))
+          , onBlur (LC.send channel (task.id, Commit))
+          , onTaskKeyDown (LC.send channel (task.id, Commit))
+                          (LC.send channel (task.id, Cancel))
           ]
           []
       ]
 
-onEnter : Signal.Message -> Attribute
-onEnter message =
+onTaskKeyDown : Signal.Message -> Signal.Message -> Attribute
+onTaskKeyDown onEnter onEscape =
     on "keydown"
-      (Json.customDecoder keyCode is13)
-      (always message)
+           (Json.customDecoder keyCode (belongsTo [13, 27]))
+           (\code -> case code of
+                       13 -> onEnter
+                       27 -> onEscape)
 
-is13 : Int -> Result String ()
-is13 code =
-  if code == 13 then Ok () else Err "not the right key code"
+belongsTo : List Int -> (Int -> Result String Int)
+belongsTo ks =
+    \code -> if (List.any ((==) code) ks)
+             then Ok code
+             else Err "not the right key code"

@@ -129,7 +129,7 @@ taskEntry task =
           , value task
           , name "newTodo"
           , on "input" targetValue (Signal.send actions << UpdateField)
-          , Task.onEnter (Signal.send actions Add)
+          , Task.onTaskKeyDown (Signal.send actions Add) (Signal.send actions NoOp)
           ]
           []
       ]
@@ -222,11 +222,12 @@ infoFooter =
 
 -- wire the entire application together
 main : Signal Element
-main = Signal.map2 scene model Window.dimensions
+main = Signal.map3 scene model router Window.dimensions
 
-scene : Model -> (Int,Int) -> Element
-scene model (w,h) =
-    container w h midTop (toElement 550 h (view model))
+scene : Model -> String -> (Int,Int) -> Element
+scene model v (w,h) =
+    let m = {model | visibility <- v} in
+    container w h midTop (toElement 550 h (view m))
 
 -- manage the model of our application over time
 model : Signal Model
@@ -238,6 +239,8 @@ actions = Signal.channel NoOp
 
 taskActions : LC.LocalChannel (Int, Task.Action)
 taskActions = LC.create UpdateTask actions
+
+port router : Signal String
 
 port focus : Signal (Maybe Int)
 port focus =
